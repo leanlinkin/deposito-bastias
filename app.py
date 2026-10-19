@@ -141,11 +141,9 @@ def mostrar_sistema():
             if df.empty:
                 st.warning("⚠️ No hay base de datos cargada. Subí el Excel desde el panel inferior.")
             else:
-                # Buscamos en las 3 columnas posibles (Nombre, Cod Bejerman o Cod Proveedor)
                 mask = df[COL_NOMBRE].astype(str).str.contains(busqueda, case=False, na=False) | \
                        df[COL_CODIGO_BEJ].astype(str).str.contains(busqueda, case=False, na=False)
                 
-                # Chequeamos si existe la de proveedor por las dudas, para evitar errores
                 if COL_CODIGO_PROV in df.columns:
                     mask = mask | df[COL_CODIGO_PROV].astype(str).str.contains(busqueda, case=False, na=False)
                 
@@ -154,7 +152,6 @@ def mostrar_sistema():
                 if resultados.empty:
                     st.error("No se encontró ningún artículo con ese dato.")
                 else:
-                    # Creamos la lista desplegable mostrando Código y Nombre
                     opciones = resultados[COL_CODIGO_BEJ].astype(str) + " - " + resultados[COL_NOMBRE].astype(str)
                     opciones_unicas = opciones.unique()
                     
@@ -162,23 +159,38 @@ def mostrar_sistema():
                     articulo_elegido = st.selectbox("🎯 Resultados encontrados (Seleccioná el correcto):", opciones_unicas)
                     
                     if articulo_elegido:
-                        # Filtramos solo el articulo que elegiste en el desplegable
-                        df_exacto = resultados[opciones == articulo_elegido]
+                        # Filtramos solo el articulo que elegiste
+                        df_exacto = resultados[opciones == articulo_elegido].copy()
                         
-                        # Sumamos la cantidad de todas las partidas de ese artículo
-                        total = pd.to_numeric(df_exacto[COL_CANT], errors='coerce').sum()
-                        st.success(f"**TOTAL DISPONIBLE: {total:g} unidades**")
+                        # Nos aseguramos que las cantidades sean números
+                        df_exacto[COL_CANT] = pd.to_numeric(df_exacto[COL_CANT], errors='coerce').fillna(0)
                         
-                        # Preparamos la tabla de lotes y le cambiamos los nombres para que Dani lea más fácil
-                        st.write("Desglose por Partidas:")
-                        df_lotes = df_exacto[[COL_LOTE, COL_VENC, COL_CANT]].copy()
-                        df_lotes = df_lotes.rename(columns={
-                            COL_LOTE: "Partida",
-                            COL_VENC: "Vencimiento",
-                            COL_CANT: "Cantidad"
-                        })
+                        # Sumamos la cantidad de todas las partidas
+                        total = df_exacto[COL_CANT].sum()
                         
-                        st.dataframe(df_lotes, use_container_width=True, hide_index=True)
+                        # Mostramos el cartel de total
+                        if total > 0:
+                            st.success(f"**TOTAL DISPONIBLE: {total:g} unidades**")
+                        else:
+                            st.error("**SIN STOCK DISPONIBLE (0 unidades)**")
+                        
+                        # --- ACÁ ESTÁ LA MAGIA NUEVA ---
+                        # Filtramos para quedarnos SOLO con las partidas que tengan más de 0
+                        df_con_stock = df_exacto[df_exacto[COL_CANT] > 0]
+                        
+                        st.write("Desglose por Partidas (solo partidas con stock):")
+                        if df_con_stock.empty:
+                            st.info("No hay partidas con stock positivo para mostrar.")
+                        else:
+                            # Preparamos la tabla limpia
+                            df_lotes = df_con_stock[[COL_LOTE, COL_VENC, COL_CANT]].copy()
+                            df_lotes = df_lotes.rename(columns={
+                                COL_LOTE: "Partida",
+                                COL_VENC: "Vencimiento",
+                                COL_CANT: "Cantidad"
+                            })
+                            
+                            st.dataframe(df_lotes, use_container_width=True, hide_index=True)
 
         if rol == "Admin":
             st.write("---")

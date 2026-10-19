@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import os
 
-st.set_page_config(page_title="Depósito Bastías", page_icon="🦋", layout="centered")
+# Configuración de página "Wide" para aprovechar todo el monitor como un programa de escritorio
+st.set_page_config(page_title="Sistema de Depósito", page_icon="📦", layout="wide")
 
 # ==========================================
-# CONFIGURACIÓN DE TU EXCEL (Nombres Reales)
+# CONFIGURACIÓN DE TU EXCEL
 # ==========================================
 COL_NOMBRE = "Artículo - Desc. Gen."
 COL_CODIGO_BEJ = "Stock - Artículo - Cód. Gen."
@@ -14,225 +15,225 @@ COL_LOTE = "Stock - Partida - Cód."
 COL_VENC = "Stock - Partida - F. Vto. / Ingreso"
 COL_CANT = "Stock - Partida - Cant. Real en UM 1"
 
-# ==========================================
-# FUNCIÓN PARA LEER LA BASE DE DATOS REAL
-# ==========================================
 @st.cache_data
 def cargar_bd():
     if os.path.exists("base_datos_actual.xlsx"):
         try:
-            df = pd.read_excel("base_datos_actual.xlsx")
-            return df
-        except Exception as e:
-            st.error(f"Error al leer el archivo: {e}")
+            return pd.read_excel("base_datos_actual.xlsx")
+        except Exception:
             return pd.DataFrame()
     return pd.DataFrame()
 
 # ==========================================
-# BASE DE DATOS USUARIOS Y TAREAS
+# CSS PARA IGUALAR TU PROGRAMA ORIGINAL
 # ==========================================
-USUARIOS = {
-    "Leandro": {"clave": "admin123", "rol": "Admin"},
-    "Dani": {"clave": "dani123", "rol": "Empleado"},
-    "Invitado": {"clave": "invitado123", "rol": "Invitado"}
-}
-
-if "usuario_actual" not in st.session_state:
-    st.session_state["usuario_actual"] = None
-    st.session_state["rol"] = None
-    st.session_state["pantalla"] = "stock"
-    st.session_state["tareas"] = [
-        {"id": 1, "texto": "Armar pedido para Farmacia Centro", "hecha": False, "vista": False}
-    ]
-
-def cambiar_pantalla(nueva_pantalla):
-    st.session_state["pantalla"] = nueva_pantalla
-
-# ==========================================
-# INYECCIÓN DE DISEÑO (CSS)
-# ==========================================
-def aplicar_estilos_segun_usuario():
-    rol = st.session_state["rol"]
-    if rol == "Empleado":
-        st.markdown("""
-            <style>
-            html, body, p, div, input, label, select { font-size: 22px !important; }
-            h1 { font-size: 45px !important; }
-            h2 { font-size: 35px !important; }
-            h3 { font-size: 30px !important; }
-            .stButton > button { height: 70px !important; font-size: 22px !important; font-weight: bold !important; border-radius: 10px !important; }
-            @keyframes parpadeo {
-                0% { background-color: #ff4b4b; color: white; border-color: #ff4b4b; }
-                50% { background-color: transparent; color: #ff4b4b; border-color: #ff4b4b; }
-                100% { background-color: #ff4b4b; color: white; border-color: #ff4b4b; }
-            }
-            div[data-testid="stSidebar"] button[kind="primary"] {
-                animation: parpadeo 1.5s infinite; height: 90px !important; font-size: 24px !important;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("<style>.stButton > button { font-weight: bold; }</style>", unsafe_allow_html=True)
-
-# ==========================================
-# PANTALLAS
-# ==========================================
-def mostrar_login():
-    st.title("🦋 Sistema de Depósito")
-    st.write("Iniciá sesión para continuar.")
+st.markdown("""
+    <style>
+    /* Ocultar barra superior y menú para que parezca una app de escritorio */
+    header {visibility: hidden;}
     
-    usuario = st.text_input("Usuario")
-    clave = st.text_input("Contraseña", type="password")
+    /* Tamaños de texto gigantes para Dani */
+    html, body, p, div, span { font-size: 24px !important; }
     
-    if st.button("Ingresar", type="primary"):
-        if usuario in USUARIOS and USUARIOS[usuario]["clave"] == clave:
-            st.session_state["usuario_actual"] = usuario
-            st.session_state["rol"] = USUARIOS[usuario]["rol"]
-            st.session_state["pantalla"] = "stock"
-            st.rerun()
+    /* Estilos del Stock Total Verde (Igual a 3.PNG) */
+    .stock-gigante {
+        font-size: 60px !important;
+        color: #00b050 !important;
+        font-weight: 900 !important;
+        margin-top: 20px;
+    }
+    
+    /* Fondo limpio esperando búsqueda (Igual a 1.PNG) */
+    .esperando {
+        text-align: center;
+        font-size: 50px !important;
+        font-weight: bold;
+        margin-top: 100px;
+        margin-bottom: 100px;
+    }
+
+    /* Colores exactos de los botones de 3.PNG y 4.PNG */
+    button[kind="primary"] { font-size: 24px !important; height: 60px !important; }
+    
+    /* Botón Naranja VER LOTES */
+    .btn-naranja > button {
+        background-color: #f39c12 !important;
+        color: white !important;
+        border: 2px solid #e67e22 !important;
+        font-weight: bold !important;
+    }
+    /* Botón Morado UBICACIÓN */
+    .btn-morado > button {
+        background-color: #8e44ad !important;
+        color: white !important;
+        border: 2px solid #732d91 !important;
+        font-weight: bold !important;
+    }
+    /* Botón Rojo VOLVER/CERRAR */
+    .btn-rojo > button {
+        background-color: #e74c3c !important;
+        color: white !important;
+        border: 2px solid #c0392b !important;
+        font-weight: bold !important;
+    }
+    /* Botón Verde TAREAS */
+    .btn-verde > button {
+        background-color: #27ae60 !important;
+        color: white !important;
+        border: 2px solid #2ecc71 !important;
+        font-weight: bold !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Variables de memoria
+if "articulo_seleccionado" not in st.session_state:
+    st.session_state["articulo_seleccionado"] = None
+
+df = cargar_bd()
+
+# ==========================================
+# VENTANAS FLOTANTES (POP-UPS EXACTOS)
+# ==========================================
+
+# 1. Pop-up de Resultados (Igual a 2.PNG)
+@st.dialog("Resultados de búsqueda", width="large")
+def modal_resultados(df_filtrado):
+    st.write("Seleccioná el artículo correcto de la lista:")
+    
+    # Armamos una lista de opciones claras para Dani
+    opciones = df_filtrado[COL_CODIGO_BEJ].astype(str) + " - " + df_filtrado[COL_NOMBRE].astype(str)
+    opciones_unicas = opciones.unique()
+    
+    elegido = st.radio("Opciones encontradas:", opciones_unicas, label_visibility="collapsed")
+    
+    st.write("---")
+    if st.button("ABRIR ARTÍCULO SELECCIONADO", type="primary", use_container_width=True):
+        st.session_state["articulo_seleccionado"] = elegido
+        st.rerun()
+    
+    # Botón rojo para cerrar (Igual a 2.PNG)
+    st.markdown('<div class="btn-rojo">', unsafe_allow_html=True)
+    if st.button("CERRAR VENTANA", use_container_width=True):
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# 2. Pop-up de Lotes (Igual a 4.PNG)
+@st.dialog("Lotes del artículo", width="large")
+def modal_lotes(df_lotes):
+    # Renombramos columnas para igualar a 4.PNG
+    df_lotes_limpio = df_lotes.rename(columns={
+        COL_LOTE: "Nro de Lote",
+        COL_CANT: "Cantidad",
+        COL_VENC: "Vencimiento"
+    })
+    st.dataframe(df_lotes_limpio, use_container_width=True, hide_index=True)
+    
+    st.write("---")
+    # Botón rojo para volver (Igual a 4.PNG)
+    st.markdown('<div class="btn-rojo">', unsafe_allow_html=True)
+    if st.button("VOLVER AL BUSCADOR", use_container_width=True):
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+# ==========================================
+# PANTALLA PRINCIPAL (DISEÑO 1.PNG y 3.PNG)
+# ==========================================
+
+# BARRA SUPERIOR (Buscador y Botones)
+col_buscar, col_espacio, col_plan, col_hoja, col_tareas = st.columns([4, 1, 1.5, 1.5, 1.5])
+
+with col_buscar:
+    busqueda = st.text_input("🔍 Buscar por Nombre o Código...", label_visibility="collapsed", placeholder="Ingresar búsqueda...")
+
+with col_plan:
+    st.button("Planilla de\nControl", use_container_width=True)
+with col_hoja:
+    st.button("Hoja de\nRuta 🚚", use_container_width=True)
+with col_tareas:
+    st.markdown('<div class="btn-verde">', unsafe_allow_html=True)
+    st.button("📋 TAREAS ✔", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.write("---")
+
+# LÓGICA DE BÚSQUEDA
+if busqueda:
+    if not df.empty:
+        mask = df[COL_NOMBRE].astype(str).str.contains(busqueda, case=False, na=False) | \
+               df[COL_CODIGO_BEJ].astype(str).str.contains(busqueda, case=False, na=False)
+        
+        if COL_CODIGO_PROV in df.columns:
+            mask = mask | df[COL_CODIGO_PROV].astype(str).str.contains(busqueda, case=False, na=False)
+        
+        resultados = df[mask]
+        
+        if not resultados.empty:
+            # Si buscó, abrimos la ventana flotante automáticamente
+            modal_resultados(resultados)
         else:
-            st.error("Usuario o contraseña incorrectos ❌")
+            st.error("No se encontró el artículo.")
 
-def mostrar_sistema():
-    aplicar_estilos_segun_usuario()
-    rol = st.session_state["rol"]
-    nombre = st.session_state["usuario_actual"]
-    
-    tareas_pendientes = [t for t in st.session_state["tareas"] if not t["hecha"]]
-    hay_pendientes = len(tareas_pendientes) > 0
+# MOSTRAR LA PANTALLA (ESPERANDO O EL ARTÍCULO)
+if st.session_state["articulo_seleccionado"] is None:
+    # Pantalla vacía (Igual a 1.PNG)
+    st.markdown('<div class="esperando">ESPERANDO BÚSQUEDA...</div>', unsafe_allow_html=True)
+    st.markdown('<div class="stock-gigante" style="color: black !important;">STOCK TOTAL: --</div>', unsafe_allow_html=True)
 
-    with st.sidebar:
-        st.title(f"Hola, {nombre} 👋")
-        st.write("---")
-        
-        if st.button("📦 Buscador de Stock", use_container_width=True):
-            cambiar_pantalla("stock")
-            st.rerun()
-
-        if rol == "Empleado":
-            if hay_pendientes:
-                if st.button("⚠️ VER TAREAS", type="primary", use_container_width=True):
-                    cambiar_pantalla("tareas")
-                    st.rerun()
-            else:
-                if st.button("📋 Ver Tareas", use_container_width=True):
-                    cambiar_pantalla("tareas")
-                    st.rerun()
-        elif rol == "Admin":
-            if st.button("📋 Ver Tareas", use_container_width=True):
-                cambiar_pantalla("tareas")
-                st.rerun()
-
-        st.write("---")
-        if st.button("Cerrar Sesión", use_container_width=True):
-            st.session_state["usuario_actual"] = None
-            st.session_state["rol"] = None
-            st.rerun()
-
-    # --- PANTALLA 1: STOCK ---
-    if st.session_state["pantalla"] == "stock":
-        st.header("📦 Buscador de Stock")
-        
-        busqueda = st.text_input("🔍 Buscar por Nombre, Cód. Bejerman o Cód. Proveedor...")
-        
-        if busqueda:
-            df = cargar_bd()
-            
-            if df.empty:
-                st.warning("⚠️ No hay base de datos cargada. Subí el Excel desde el panel inferior.")
-            else:
-                mask = df[COL_NOMBRE].astype(str).str.contains(busqueda, case=False, na=False) | \
-                       df[COL_CODIGO_BEJ].astype(str).str.contains(busqueda, case=False, na=False)
-                
-                if COL_CODIGO_PROV in df.columns:
-                    mask = mask | df[COL_CODIGO_PROV].astype(str).str.contains(busqueda, case=False, na=False)
-                
-                resultados = df[mask]
-                
-                if resultados.empty:
-                    st.error("No se encontró ningún artículo con ese dato.")
-                else:
-                    opciones = resultados[COL_CODIGO_BEJ].astype(str) + " - " + resultados[COL_NOMBRE].astype(str)
-                    opciones_unicas = opciones.unique()
-                    
-                    st.write("---")
-                    articulo_elegido = st.selectbox("🎯 Resultados encontrados (Seleccioná el correcto):", opciones_unicas)
-                    
-                    if articulo_elegido:
-                        # Filtramos solo el articulo que elegiste
-                        df_exacto = resultados[opciones == articulo_elegido].copy()
-                        
-                        # Nos aseguramos que las cantidades sean números
-                        df_exacto[COL_CANT] = pd.to_numeric(df_exacto[COL_CANT], errors='coerce').fillna(0)
-                        
-                        # Sumamos la cantidad de todas las partidas
-                        total = df_exacto[COL_CANT].sum()
-                        
-                        # Mostramos el cartel de total
-                        if total > 0:
-                            st.success(f"**TOTAL DISPONIBLE: {total:g} unidades**")
-                        else:
-                            st.error("**SIN STOCK DISPONIBLE (0 unidades)**")
-                        
-                        # --- ACÁ ESTÁ LA MAGIA NUEVA ---
-                        # Filtramos para quedarnos SOLO con las partidas que tengan más de 0
-                        df_con_stock = df_exacto[df_exacto[COL_CANT] > 0]
-                        
-                        st.write("Desglose por Partidas (solo partidas con stock):")
-                        if df_con_stock.empty:
-                            st.info("No hay partidas con stock positivo para mostrar.")
-                        else:
-                            # Preparamos la tabla limpia
-                            df_lotes = df_con_stock[[COL_LOTE, COL_VENC, COL_CANT]].copy()
-                            df_lotes = df_lotes.rename(columns={
-                                COL_LOTE: "Partida",
-                                COL_VENC: "Vencimiento",
-                                COL_CANT: "Cantidad"
-                            })
-                            
-                            st.dataframe(df_lotes, use_container_width=True, hide_index=True)
-
-        if rol == "Admin":
-            st.write("---")
-            st.subheader("⚙️ Actualizar Base de Datos")
-            archivo_db = st.file_uploader("Seleccioná tu archivo actualizado (.xlsx)", type=["xlsx"])
-            if archivo_db:
-                with open("base_datos_actual.xlsx", "wb") as f:
-                    f.write(archivo_db.getbuffer())
-                st.cache_data.clear()
-                st.success("✅ ¡Base de datos subida y actualizada con éxito para todos los usuarios!")
-
-    # --- PANTALLA 2: TAREAS ---
-    elif st.session_state["pantalla"] == "tareas":
-        st.header("📋 Panel de Tareas")
-        
-        if not hay_pendientes:
-            st.info("No hay tareas pendientes. ¡Todo al día! 💪")
-        else:
-            for i, tarea in enumerate(st.session_state["tareas"]):
-                if not tarea["hecha"]:
-                    if rol == "Empleado":
-                        st.info(f"👉 **{tarea['texto']}**")
-                        if st.button("✅ COMPLETADO", key=f"btn_{tarea['id']}", type="primary", use_container_width=True):
-                            st.session_state["tareas"][i]["hecha"] = True
-                            st.rerun()
-                        st.write("---")
-                    else:
-                        st.write(f"🔹 {tarea['texto']}")
-        
-        if rol == "Admin":
-            st.write("---")
-            st.subheader("Asignar nueva tarea a Dani")
-            with st.form("form_nueva_tarea"):
-                nueva = st.text_input("Descripción de la tarea:")
-                if st.form_submit_button("Enviar Tarea"):
-                    if nueva:
-                        nuevo_id = len(st.session_state["tareas"]) + 1
-                        st.session_state["tareas"].append({"id": nuevo_id, "texto": nueva, "hecha": False, "vista": False})
-                        st.success("¡Tarea enviada!")
-                        st.rerun()
-
-if st.session_state["usuario_actual"] is None:
-    mostrar_login()
 else:
-    mostrar_sistema()
+    # Pantalla con el artículo cargado (Igual a 3.PNG)
+    articulo_actual = st.session_state["articulo_seleccionado"]
+    
+    # Filtramos el DataFrame para obtener los datos
+    opciones_df = df[COL_CODIGO_BEJ].astype(str) + " - " + df[COL_NOMBRE].astype(str)
+    df_exacto = df[opciones_df == articulo_actual].copy()
+    
+    df_exacto[COL_CANT] = pd.to_numeric(df_exacto[COL_CANT], errors='coerce').fillna(0)
+    total_stock = df_exacto[COL_CANT].sum()
+    
+    # Extraemos el nombre y códigos
+    nombre_limpio = df_exacto.iloc[0][COL_NOMBRE] if not df_exacto.empty else "DESCONOCIDO"
+    cod_prov = df_exacto.iloc[0][COL_CODIGO_PROV] if COL_CODIGO_PROV in df_exacto.columns else "--"
+    
+    # Textos centrales (Igual a 3.PNG)
+    st.markdown(f"<h1 style='text-align: center; font-size: 50px !important;'>{nombre_limpio}</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #95a5a6;'>📍 UBICACIÓN: SIN ASIGNAR</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='text-align: center;'>CÓD. PROVEEDOR: {cod_prov}</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center;'>MARCA: --</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #2980b9;'>PROVEEDOR: --</h4>", unsafe_allow_html=True)
+    
+    st.write("")
+    st.write("")
+    
+    # Fila inferior: Stock Total a la izquierda, Botones a la derecha (Igual a 3.PNG)
+    col_stock, col_btn_lotes, col_btn_ubi = st.columns([2, 1, 1])
+    
+    with col_stock:
+        st.markdown(f'<div class="stock-gigante">STOCK TOTAL: {total_stock:g}</div>', unsafe_allow_html=True)
+        
+    with col_btn_lotes:
+        st.write("") # Espaciador para alinear
+        st.markdown('<div class="btn-naranja">', unsafe_allow_html=True)
+        if st.button("VER LOTES 🔍", use_container_width=True):
+            # Filtramos solo los que tienen stock positivo
+            df_lotes_positivos = df_exacto[df_exacto[COL_CANT] > 0][[COL_LOTE, COL_CANT, COL_VENC]]
+            modal_lotes(df_lotes_positivos)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with col_btn_ubi:
+        st.write("") # Espaciador para alinear
+        st.markdown('<div class="btn-morado">', unsafe_allow_html=True)
+        st.button("UBICACIÓN 📍", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# Sección escondida al fondo para que Leandro (Admin) pueda subir la BD
+st.write("---")
+with st.expander("⚙️ Administrador: Actualizar Base de Datos"):
+    archivo_db = st.file_uploader("Subir Excel", type=["xlsx"])
+    if archivo_db:
+        with open("base_datos_actual.xlsx", "wb") as f:
+            f.write(archivo_db.getbuffer())
+        st.cache_data.clear()
+        st.success("✅ Base de datos actualizada.")
+        st.rerun()
